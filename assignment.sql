@@ -66,7 +66,6 @@ group by website_pageviews.pageview_url
 order by sessions_hitting_page desc;
 
 /* Calculate the bounce rate. Get the request on June 14, 2012 */
-
 -- step 1: find the first website_pageview_id for relevant sessions
 create temporary table first_view_page
 select website_session_id, min(website_pageview_id) as first_page
@@ -94,3 +93,63 @@ select count(distinct first_url.website_session_id) as sessions,
 count(distinct bouncedsession.website_session_id) as bounced_sessions,
 count(distinct bouncedsession.website_session_id)/count(distinct first_url.website_session_id) as bouncedrate
 from first_url left join bouncedsession on first_url.website_session_id = bouncedsession.website_session_id;
+
+/*Build a conversation funnel and analyze how many customers make it to each step from August 5th to September 5th 2012*/
+-- step 1: select all pageviews for relevant sessions
+-- step 2: identify each pageview as the specific funnel step
+-- step 3: create the session-level conversion funnel view 
+-- step 4: aggregate the data to access funnel performance
+create temporary table conversation_funnel
+select website_session_id, 
+	max(products_page) as to_product_page,
+    max(fuzzy_page) as to_fuzzy_page,
+    max(cart_page) as to_cart_page,
+    max(shipping_page) as to_shipping_page,
+    max(billing_page) as to_billing_page,
+    max(thankyou_page) as to_thankyou_page
+from(
+select  website_sessions.website_session_id, website_pageviews.pageview_url,
+	case when pageview_url="/products" then 1 else 0 end as products_page,
+    case when pageview_url="/the-original-mr-fuzzy" then 1 else 0 end as fuzzy_page,
+    case when pageview_url="/cart" then 1 else 0 end as cart_page,
+    case when pageview_url="/shipping" then 1 else 0 end as shipping_page,
+    case when pageview_url="/billing" then 1 else 0 end as billing_page,
+    case when pageview_url="/thank-you-for-your-order" then 1 else 0 end as thankyou_page
+from website_sessions left join website_pageviews
+	on website_sessions.website_session_id = website_pageviews.website_session_id
+where website_sessions.utm_source="gsearch" and website_sessions.utm_campaign="nonbrand" and website_sessions.created_at > '2012-08-05' and website_sessions.created_at < '2012-09-05'
+order by website_sessions.website_session_id, website_sessions.created_at
+) as subquerry
+group by website_sessions.website_session_id;
+
+select website_session_id, 
+	count(distinct case when to_product_page=1 then website_session_id else null end)/count(distinct website_session_id) as lander_click_rate,
+    count(distinct case when to_fuzzy_page=1 then website_session_id else null end)/count(distinct case when to_product_page=1 then website_session_id else null end) as product_click_rate,
+    count(distinct case when to_cart_page=1 then website_session_id else null end)/count(distinct case when to_fuzzy_page=1 then website_session_id else null end) as fuzzy_click_rate,
+    count(distinct case when to_shipping_page=1 then website_session_id else null end)/count(distinct case when to_cart_page=1 then website_session_id else null end) as cart_click_rate,
+    count(distinct case when to_billing_page=1 then website_session_id else null end)/count(distinct case when to_shipping_page=1 then website_session_id else null end) as shipping_click_rate,
+    count(distinct case when to_thankyou_page=1 then website_session_id else null end)/count(distinct case when to_billing_page=1 then website_session_id else null end) as billing_click_rate
+from conversation_funnel;
+
+/* Testing a new billing page /billing-2 compared with /billing. What % sessions on those pages end up placing an order? */
+-- step 1: find out when the testing starts?
+select min(website_pageview_id)
+from website_pageviews
+where pageview_url="/billing-2";
+
+-- step 2: join pageview with order and calculate the rate
+select pageview_url,
+	count(distinct website_session_id) as sessions,
+    count(distinct order_id) as orders,
+    count(distinct order_id)/count(distinct website_session_id) as order_rate
+from (
+select website_pageviews.website_session_id, 
+	   website_pageviews.pageview_url, 
+       orders.order_id
+from website_pageviews left join orders
+	on website_pageviews.website_session_id = orders.website_session_id
+where website_pageviews.website_pageview_id >= 53550 
+	and website_pageviews.created_at < "2012-11-10"
+	and website_pageviews.pageview_url in('/billing','/billing-2')
+) as subquerry
+group by pageview_url;
