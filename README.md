@@ -1,6 +1,6 @@
 ## SQL projects
 
-The dataset contains three tables: website sessions, pageviews and orders.
+The database contains three tables: website sessions, pageviews and orders.
 
 The website_sessions table contains the following columns:
 | Column Name | 
