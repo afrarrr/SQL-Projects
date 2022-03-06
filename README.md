@@ -1,4 +1,6 @@
-## SQL projects
+## SQL projects 
+
+## Database: Maven Fuzzy Factory Website  
 
 The database contains three tables: website sessions, pageviews and orders.
 
