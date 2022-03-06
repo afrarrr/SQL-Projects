@@ -2,7 +2,7 @@
 
 The database contains three tables: website sessions, pageviews and orders.
 
-The website_sessions table contains the following columns:
+The website_sessions table contains the following columns (472871 rows):
 | Column Name | 
 |-------------|
 |website_session_id|
@@ -15,7 +15,7 @@ The website_sessions table contains the following columns:
 |device_type|
 |http_refer|
 
-The website_pageviews table:
+The website_pageviews table (1188124 rows):
 | Column Name | 
 |-------------|
 |website_pageview_id|
@@ -23,7 +23,7 @@ The website_pageviews table:
 |website_session_id|
 |pageview_url|
 
-The orders table:
+The orders table (32313 rows):
 | Column Name | 
 |-------------|
 |order_id|
