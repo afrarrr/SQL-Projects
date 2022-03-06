@@ -1,9 +1,10 @@
 ## SQL projects 
 
-## Database: Maven Fuzzy Factory Website  
+## Database
+
+#### Maven Fuzzy Factory Website Data 
 
 The database contains three tables: website sessions, pageviews and orders.
-
 The website_sessions table contains the following columns (472871 rows):
 | Column Name | 
 |-------------|
